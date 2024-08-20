@@ -31,6 +31,7 @@ jobs:
       - name: Print the input tag to STDOUT
         run: echo  The tags are ${{ inputs.tags }} 
   print_context:
+    needs: print-tag
     runs-on: ubuntu-latest
     steps:
       - env:
