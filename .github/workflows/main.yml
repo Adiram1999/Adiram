@@ -1,39 +1,16 @@
 on:
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: 'Log level'
+      chosen-os:
         required: true
-        default: 'warning'
         type: choice
         options:
-          - info
-          - warning
-          - debug
-      print_tags:
-        description: 'True to print to STDOUT'
-        required: true
-        type: boolean
-      tags:
-        description: 'Test scenario tags'
-        required: true
-        type: string
-      environment:
-        description: 'Environment to run tests against'
-        type: environment
-        required: true
+        - Ubuntu
+        - macOS
+        - Windows
 
 jobs:
-  print-tag:
-    runs-on: ubuntu-latest
-    if:  ${{ inputs.print_tags }} 
+  test:
+    runs-on: [self-hosted, "${{ inputs.chosen-os }}"]
     steps:
-      - name: Print the input tag to STDOUT
-        run: echo  The tags are ${{ inputs.tags }}
-  print_context:
-    runs-on: ubuntu-latest
-    steps:
-      - env:
-          EVENT_CONTEXT: ${{ toJSON(github.event) }}
-        run: |
-          echo $EVENT_CONTEXT
+    - run: echo Hello "${{ inputs.chosen-os }.
