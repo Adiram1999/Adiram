@@ -13,8 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # This step checks out a copy of your repository.
-      - name: My first step - check out repository
-        uses: actions/checkout@v4
+      # - name: My first step - check out repository
+      #   uses: actions/checkout@v4
       - name: My Second Step
-        run: echo this is running on ${{ inputs.chosen-os}}
+        run: |
+             echo this is running on ${{ inputs.chosen-os}}
+             echo "::debug::Set the dubug variable"
   
