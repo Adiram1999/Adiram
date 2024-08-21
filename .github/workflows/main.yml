@@ -8,9 +8,13 @@ on:
         - ubuntu-latest
         - macos-13
         - windows-latest
-
 jobs:
-  test:
-    runs-on: ${{ inputs.chosen-os}}
+  my_first_job:
+    runs-on: ubuntu-latest
     steps:
-    - run: echo Hello ${{ inputs.chosen-os}} .
+      # This step checks out a copy of your repository.
+      - name: My first step - check out repository
+        uses: actions/checkout@v4
+      - name: My Second Step
+        run: echo this is running on ${{ inputs.chosen-os}}
+  
