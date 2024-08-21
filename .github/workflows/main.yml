@@ -19,4 +19,10 @@ jobs:
         run: |
              echo this is running on ${{ inputs.chosen-os}}
              echo "::debug::Set the dubug variable"
+      - name: Group of log lines
+        run: |
+            echo "::group::My title"
+            echo "Inside group"
+            echo  "this is called Group"
+            echo "::endgroup::"
   
