@@ -6,11 +6,11 @@ on:
         type: choice
         options:
         - ubuntu-latest
-        - macOS
-        - windows
+        - macos-13
+        - windows-latest
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.chosen-os}}
     steps:
     - run: echo Hello ${{ inputs.chosen-os}} .
