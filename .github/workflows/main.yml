@@ -9,20 +9,16 @@ on:
         - macos-13
         - windows-latest
 jobs:
-  my_first_job:
+  generate-a-secret-output:
     runs-on: ubuntu-latest
     steps:
-      # This step checks out a copy of your repository.
-      # - name: My first step - check out repository
-      #   uses: actions/checkout@v4
-      - name: My Second Step
+      - id: sets-a-secret
+        name: Generate, mask, and output a secret
         run: |
-             echo this is running on ${{ inputs.chosen-os}}
-             echo "::debug::Set the dubug variable"
-      - name: Group of log lines
+          the_secret=$((RANDOM))
+          echo "::add-mask::$the_secret"
+          echo "secret-number=$the_secret" >> "$GITHUB_OUTPUT"
+      - name: Use that secret output (protected by a mask)
         run: |
-            echo "::group::My title"
-            echo "Inside group"
-            echo  "this is called Group"
-            echo "::endgroup::"
+          echo "the secret number is ${{ steps.sets-a-secret.outputs.secret-number }}"
   
