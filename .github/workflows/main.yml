@@ -27,6 +27,11 @@ jobs:
   configure:
     name: Configure the Deployment
     runs-on: ubuntu-latest
+    outputs:
+      SERVICE_PATH: ${{ steps.set-variable.outputs.SERVICE_PATH }}
+      REPOSITORY: ${{ steps.set-variable.outputs.REPOSITORY }}
+      IMAGE: ${{ steps.set-variable.outputs.IMAGE }}
+      YAML: ${{ steps.set-variable.outputs.YAML }}
     steps:
       - name: Set variable based on condition
         id: set-variable
