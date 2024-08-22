@@ -18,7 +18,11 @@ on:
       branch_name:
         description: 'Branch Name'
         required: true
-    
+env:
+  PROJECT_ID: weyyak-preprod
+  GKE_LOCATION: me-central1 # TODO: update region of the Artifact Registry
+  GKE_CLUSTER: weyyak-preprod-xms-dev # TODO: update to cluster name
+  NAMESPACE: weyyak-preprod-xms    
 jobs:
   configure:
     name: Configure the Deployment
@@ -59,3 +63,8 @@ jobs:
           echo "REPOSITORY is ${{ needs.configure.outputs.REPOSITORY }}"
           echo "IMAGE is ${{ needs.configure.outputs.IMAGE }}"
           echo "YAML is ${{ needs.configure.outputs.YAML }}"
+          echo "PROJECT_ID is ${{env.PROJECT_ID}} "
+          echo "GKE_LOCATION is ${{env.GKE_LOCATION}} "
+          echo "GKE_CLUSTER is ${{env.GKE_CLUSTER}} "
+          echo "NAMESPACE is ${{env.NAMESPACE}} "
+          
