@@ -72,4 +72,62 @@ jobs:
           echo "GKE_LOCATION is ${{env.GKE_LOCATION}} "
           echo "GKE_CLUSTER is ${{env.GKE_CLUSTER}} "
           echo "NAMESPACE is ${{env.NAMESPACE}} "
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    needs : configure
+    runs-on: ubuntu-latest
+    environment: preprod
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up SSH key
+      run: |
+       mkdir -p ~/.ssh
+       echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+       chmod 600 ~/.ssh/id_rsa
+       ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - name: cloning dev repository
+      run: |-
+        git clone git@github.com:engrotech/xms.git -b "${{ inputs.branch_name }}"
+        cd ${{ needs.configure.outputs.SERVICE_PATH }}
+    
+    # Alternative option - authentication via credentials json
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCLOUD_AUTH_PREPROD_WYK }}'
+
+    - name: Docker configuration
+      run: |-
+        gcloud auth configure-docker ${{ env.GKE_LOCATION }}-docker.pkg.dev
+
+    # Get the GKE credentials so we can deploy to the cluster
+    - name: Set up GKE credentials
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ env.GKE_CLUSTER }}
+        location: ${{ env.GKE_LOCATION }}
+
+    # Build the Docker image
+    - name: Build
+      run: |-
+        cd xms/core/api/module-api
+        docker build -t $IMAGE . --build-arg CONFIG_FILE=weyyak-preprod.json
+        docker tag $IMAGE:latest $GKE_LOCATION-docker.pkg.dev/$PROJECT_ID/${{ needs.configure.outputs.REPOSITORY }}/${{ needs.configure.outputs.IMAGE }}:"${{ inputs.tag_id }}"
+
+    # # Push the Docker image to Google Artifact Registry
+    - name: Publish
+      run: |-
+        docker push $GKE_LOCATION-docker.pkg.dev/$PROJECT_ID/${{ needs.configure.outputs.REPOSITORY }}/${{ needs.configure.outputs.IMAGE }}:"${{ inputs.tag_id }}"
+      
+    - name: Deploy
+      run: |-
+        git clone git@github.com:engrotech/pipelines-weyyak-kubernetes.git -b "weyyak-preprod-xms"
+        cd pipelines-weyyak-kubernetes/deployments
+        pwd
+        sed -i "s/$IMAGE:.*/$IMAGE:${{ inputs.tag_id }}/g" ${{ needs.configure.outputs.YAML }}
+        kubectl apply -f ${{ needs.configure.outputs.YAML }}
           
