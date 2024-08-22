@@ -47,3 +47,4 @@ jobs:
             echo "REPOSITORY=wyk-preprod-xms-user" >> $GITHUB_OUTPUT
             echo "IMAGE=wyk-preprod-xms-user" >> $GITHUB_OUTPUT
             echo "YAML=user.yaml" >> $GITHUB_OUTPUT
+          fi
