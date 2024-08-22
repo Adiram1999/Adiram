@@ -26,12 +26,6 @@ jobs:
     steps:
       - name: Set variable based on condition
         id: set-variable
-        shell: bash
-        env:
-          PROJECT_ID: weyyak-preprod
-          GKE_LOCATION: me-central1
-          GKE_CLUSTER: weyyak-preprod-xms-dev
-          NAMESPACE: weyyak-preprod-xms
         run: |
           if [ "${{ inputs.service }}" == "Module" ]; then
             echo "SERVICE_PATH=xms/core/api/module-api" >> $GITHUB_OUTPUT
