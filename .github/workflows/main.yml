@@ -1,4 +1,4 @@
-name: weyyak-preprod-xms
+name: weyyak-qa-xms
 on:
   workflow_dispatch: # Enable manual triggering
     inputs:
@@ -10,7 +10,7 @@ on:
         options:
         - User
         - Module
-        - Frontend
+        - Wrapper
         - Frontend-Config
       tag_id:
         description: 'Tag ID'
@@ -19,10 +19,10 @@ on:
         description: 'Branch Name'
         required: true
 env:
-  PROJECT_ID: weyyak-preprod
-  GKE_LOCATION: me-central1 # TODO: update region of the Artifact Registry
-  GKE_CLUSTER: weyyak-preprod-xms-dev # TODO: update to cluster name
-  NAMESPACE: weyyak-preprod-xms    
+  PROJECT_ID: testing-400312
+  GKE_LOCATION: asia-south1 # TODO: update region of the Artifact Registry
+  GKE_CLUSTER: engro-wykqa # TODO: update to cluster name
+  NAMESPACE: weyyak-xms
 jobs:
   configure:
     name: Configure the Deployment
@@ -38,23 +38,23 @@ jobs:
         run: |
           if [ "${{ inputs.service }}" == "Module" ]; then
             echo "SERVICE_PATH=xms/core/api/module-api" >> $GITHUB_OUTPUT
-            echo "REPOSITORY=wyk-preprod-xms-module" >> $GITHUB_OUTPUT
-            echo "IMAGE=wyk-preprod-xms-module" >> $GITHUB_OUTPUT
+            echo "REPOSITORY=wykqa-module" >> $GITHUB_OUTPUT
+            echo "IMAGE=wykqa-module" >> $GITHUB_OUTPUT
             echo "YAML=module.yaml" >> $GITHUB_OUTPUT
-          elif [ "${{ inputs.service }}" == "Frontend" ]; then
-            echo "SERVICE_PATH=xms/core/api/frontend-api" >> $GITHUB_OUTPUT
-            echo "REPOSITORY=wyk-preprod-xms-frontend" >> $GITHUB_OUTPUT
-            echo "IMAGE=wyk-preprod-xms-frontend" >> $GITHUB_OUTPUT
-            echo "YAML=frontend.yaml" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.service }}" == "Wrapper" ]; then
+            echo "SERVICE_PATH=xms/customer/weyyak/wrapper-api" >> $GITHUB_OUTPUT
+            echo "REPOSITORY=wyk-xms-wraper-api-qa" >> $GITHUB_OUTPUT
+            echo "IMAGE=wyk-xms-wraper-api-qa" >> $GITHUB_OUTPUT
+            echo "YAML=wraper-api.yaml" >> $GITHUB_OUTPUT
           elif [ "${{ inputs.service }}" == "Frontend-Config" ]; then
             echo "SERVICE_PATH=xms/customer/weyyak/frontend-config-api" >> $GITHUB_OUTPUT
-            echo "REPOSITORY=wyk-preprod-xms-frontend-config" >> $GITHUB_OUTPUT
-            echo "IMAGE=wyk-preprod-xms-frontend-config" >> $GITHUB_OUTPUT
-            echo "YAML=frontend-config.yaml" >> $GITHUB_OUTPUT
+            echo "REPOSITORY=wykqa-frontend-config" >> $GITHUB_OUTPUT
+            echo "IMAGE=wykqa-frontend-config" >> $GITHUB_OUTPUT
+            echo "YAML=frontendconfig.yaml" >> $GITHUB_OUTPUT
           else
             echo "SERVICE_PATH=xms/core/api/user-api" >> $GITHUB_OUTPUT
-            echo "REPOSITORY=wyk-preprod-xms-user" >> $GITHUB_OUTPUT
-            echo "IMAGE=wyk-preprod-xms-user" >> $GITHUB_OUTPUT
+            echo "REPOSITORY=wykqa-user" >> $GITHUB_OUTPUT
+            echo "IMAGE=wykqa-user" >> $GITHUB_OUTPUT
             echo "YAML=user.yaml" >> $GITHUB_OUTPUT
           fi
   display-values:
@@ -74,9 +74,9 @@ jobs:
           echo "NAMESPACE is ${{env.NAMESPACE}} "
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
-    needs : configure
+    needs: configure
     runs-on: ubuntu-latest
-    environment: preprod
+    environment: qa
     
     steps:
     - name: Checkout
@@ -98,7 +98,7 @@ jobs:
     - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
-        credentials_json: '${{ secrets.GCLOUD_AUTH_PREPROD_WYK }}'
+        credentials_json: '${{ secrets.GCLOUD_AUTH_QA_WYK_XMS }}'
 
     - name: Docker configuration
       run: |-
@@ -111,23 +111,18 @@ jobs:
         cluster_name: ${{ env.GKE_CLUSTER }}
         location: ${{ env.GKE_LOCATION }}
 
-    # Build the Docker image
-    - name: Build
+    # Build and Publish the Docker image
+    - name: Build and Publish
       run: |-
-        cd xms/core/api/module-api
-        docker build -t $IMAGE . --build-arg CONFIG_FILE=weyyak-preprod.json
+        cd ${{ needs.configure.outputs.SERVICE_PATH }}
+        docker build -t $IMAGE . --build-arg CONFIG_FILE=weyyak-qa.json
         docker tag $IMAGE:latest $GKE_LOCATION-docker.pkg.dev/$PROJECT_ID/${{ needs.configure.outputs.REPOSITORY }}/${{ needs.configure.outputs.IMAGE }}:"${{ inputs.tag_id }}"
-
-    # # Push the Docker image to Google Artifact Registry
-    - name: Publish
-      run: |-
         docker push $GKE_LOCATION-docker.pkg.dev/$PROJECT_ID/${{ needs.configure.outputs.REPOSITORY }}/${{ needs.configure.outputs.IMAGE }}:"${{ inputs.tag_id }}"
-      
+           
     - name: Deploy
       run: |-
-        git clone git@github.com:engrotech/pipelines-weyyak-kubernetes.git -b "weyyak-preprod-xms"
+        git clone git@github.com:engrotech/pipelines-weyyak-kubernetes.git -b "weyyak-qa-xms"
         cd pipelines-weyyak-kubernetes/deployments
         pwd
         sed -i "s/$IMAGE:.*/$IMAGE:${{ inputs.tag_id }}/g" ${{ needs.configure.outputs.YAML }}
         kubectl apply -f ${{ needs.configure.outputs.YAML }}
-          
