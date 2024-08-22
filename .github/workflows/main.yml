@@ -1,20 +1,23 @@
-name: Hi Mascot
+name: Build and deploy
 on: workflow_dispatch
-env:
-  mascot: Mona
-  super_duper_var: totally_awesome
 
 jobs:
-  windows_job:
-    runs-on: windows-latest
-    steps:
-      - run: echo 'Hi ${{ env.mascot }}'  # Hi Mona
-      - run: echo 'Hi ${{ env.mascot }}'  # Hi Octocat
-        env:
-          mascot: Octocat
-  linux_job:
+  build:
     runs-on: ubuntu-latest
-    env:
-      mascot: Tux
+    outputs:
+      build_id: ${{ steps.build_step.outputs.build_id }}
     steps:
-      - run: echo 'Hi ${{ env.mascot }}'  # Hi Tux
+      - name: Build
+        id: build_step
+        run: echo "build_id=$RANDOM" >> $GITHUB_OUTPUT
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploying build ${{ needs.build.outputs.build_id }}"
+  debug:
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - run: echo "Failed to build and deploy"
