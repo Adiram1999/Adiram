@@ -1,5 +1,5 @@
 name: weyyak-qa-xms-test
-run-name: ${{ inputs.service }} is learning GitHub Actions
+run-name: ${{ inputs.service }} : ${{inputs.tag_id}} is learning GitHub Actions
 on:
   workflow_dispatch: # Enable manual triggering
     inputs:
